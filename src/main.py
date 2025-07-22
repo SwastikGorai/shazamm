@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 import logging
 
 from database import engine
@@ -26,6 +27,7 @@ app = FastAPI(
 
 app.include_router(api_router, prefix="/api", tags=["audio"])
 
+app.mount("/", StaticFiles(directory="website", html=True), name="static")
 
 @app.get("/health")
 async def health_check():
