@@ -2,6 +2,7 @@ const recordButton = document.getElementById('recordButton');
 const recordIcon = document.getElementById('record-icon');
 const stopIcon = document.getElementById('stop-icon');
 const resultDiv = document.getElementById('result');
+const confidenceDiv = document.getElementById('confidence');
 
 let mediaRecorder;
 let audioChunks = [];
@@ -39,6 +40,7 @@ recordButton.addEventListener('click', () => {
                     .then(data => {
                         if (data.song) {
                             resultDiv.textContent = `Song identified: ${data.song.title} by ${data.song.artist}`;
+                            confidenceDiv.textContent = `Confidence: ${data.song.confidence}`;
                         } else {
                             resultDiv.textContent = 'Song not recognized.';
                         }
