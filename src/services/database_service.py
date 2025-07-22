@@ -1,10 +1,15 @@
-from typing import List, Optional, Dict, Any, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, insert, update, func
-from models.model import Song, Fingerprint
 import logging
+import asyncio
+from typing import List, Optional, Dict, Any, Tuple
+
+from sqlalchemy import select, insert, update, func
+from sqlalchemy.ext.asyncio import AsyncSession
+from models.model import Song, Fingerprint
 
 logger = logging.getLogger(__name__)
+
+FINGERPRINT_INSERT_BATCH_SIZE = 1000
+FINGERPRINT_SEARCH_BATCH_SIZE = 1000
 
 
 class AsyncDatabaseService:
@@ -12,9 +17,9 @@ class AsyncDatabaseService:
         self,
         session: AsyncSession,
         title: str,
-        artist: str = None,
-        album: str = None,
-        file_hash: str = None,
+        artist: Optional[str] = None,
+        album: Optional[str] = None,
+        file_hash: Optional[str] = None,
     ) -> Song:
         song = Song(
             title=title,
@@ -24,8 +29,7 @@ class AsyncDatabaseService:
             fingerprinted=False,
         )
         session.add(song)
-        await session.commit()
-        await session.refresh(song)
+        await session.flush()
         return song
 
     async def get_song_by_hash(
@@ -38,28 +42,23 @@ class AsyncDatabaseService:
     async def bulk_insert_fingerprints(
         self, session: AsyncSession, song_id: int, fingerprints: List[Tuple[str, int]]
     ) -> None:
-        fingerprint_data = [
-            {"hash": fp_hash, "song_id": song_id, "offset": offset}
-            for fp_hash, offset in fingerprints
-        ]
+        if not fingerprints:
+            return
 
-        if fingerprint_data:
-            batch_size = 200
-            for i in range(0, len(fingerprint_data), batch_size):
-                batch = fingerprint_data[i : i + batch_size]
-                stmt = insert(Fingerprint).values(batch)
-                await session.execute(stmt)
-                await session.commit()
-                logger.info(
-                    f"Bulk inserted {len(batch)} fingerprints for song {song_id} (batch {i // batch_size + 1})"
-                )
+        batch = []
+        for i, (fp_hash, offset) in enumerate(fingerprints, 1):
+            batch.append({"hash": fp_hash, "song_id": song_id, "offset": offset})
 
-    async def update_song_fingerprinted(
-        self, session: AsyncSession, song_id: int
-    ) -> None:
+            if i % FINGERPRINT_INSERT_BATCH_SIZE == 0:
+                await session.execute(insert(Fingerprint), batch)
+                batch.clear()
+
+        if batch:
+            await session.execute(insert(Fingerprint), batch)
+
+    async def set_song_fingerprinted(self, session: AsyncSession, song_id: int) -> None:
         stmt = update(Song).where(Song.id == song_id).values(fingerprinted=True)
         await session.execute(stmt)
-        await session.commit()
 
     async def search_fingerprints(
         self, session: AsyncSession, query_hashes: List[str]
@@ -67,11 +66,9 @@ class AsyncDatabaseService:
         if not query_hashes:
             return []
 
-        SEARCH_BATCH_SIZE = 1000
         all_matches = []
-        for i in range(0, len(query_hashes), SEARCH_BATCH_SIZE):
-            batch = query_hashes[i : i + SEARCH_BATCH_SIZE]
-
+        for i in range(0, len(query_hashes), FINGERPRINT_SEARCH_BATCH_SIZE):
+            batch = query_hashes[i : i + FINGERPRINT_SEARCH_BATCH_SIZE]
             stmt = (
                 select(
                     Fingerprint.hash,
@@ -80,34 +77,25 @@ class AsyncDatabaseService:
                     Song.title,
                     Song.artist,
                 )
-                .join(Song)
+                .join(Song, Fingerprint.song_id == Song.id)
                 .where(Fingerprint.hash.in_(batch))
             )
 
             result = await session.execute(stmt)
-            matches = result.fetchall()
-            all_matches.extend(matches)
+            all_matches.extend(result.mappings().all())
+            await asyncio.sleep(0)
 
-        return [
-            {
-                "hash": match.hash,
-                "song_id": match.song_id,
-                "offset": match.offset,
-                "title": match.title,
-                "artist": match.artist,
-            }
-            for match in all_matches
-        ]
+        return all_matches
 
     async def get_songs_count(self, session: AsyncSession) -> int:
         stmt = select(func.count(Song.id))
         result = await session.execute(stmt)
-        return result.scalar()
+        return result.scalar_one()
 
     async def get_fingerprints_count(self, session: AsyncSession) -> int:
         stmt = select(func.count(Fingerprint.id))
         result = await session.execute(stmt)
-        return result.scalar()
+        return result.scalar_one()
 
 
 db_service = AsyncDatabaseService()

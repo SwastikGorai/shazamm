@@ -29,29 +29,31 @@ async def process_audio_ingestion(
         async with AsyncSession(engine) as session:
             existing_song = await db_service.get_song_by_hash(session, file_hash)
             if existing_song:
-                logger.info(f"Song with hash {file_hash} already exists")
+                logger.info(f"Song with hash {file_hash} already exists. Skipping.")
                 return
 
-            song = await db_service.create_song(
-                session, title, artist, file_hash=file_hash
-            )
-            logger.info(f"Created song record: {song.id}")
+        logger.info(f"Generating fingerprints for new song '{title}'...")
+        fingerprints = await fingerprint_engine.fingerprint_audio(audio_data)
+        if not fingerprints:
+            logger.error(f"Failed to generate fingerprints for song '{title}'.")
+            return
+        logger.info(f"Generated {len(fingerprints)} fingerprints.")
 
-            fingerprints = await fingerprint_engine.fingerprint_audio(audio_data)
-            if not fingerprints:
-                logger.error(f"Failed to generate fingerprints for song {song.id}")
-                return
+        logger.info("Writing song and fingerprints to the database...")
+        async with AsyncSession(engine) as session:
+            async with session.begin():
+                song = await db_service.create_song(
+                    session, title, artist, file_hash=file_hash
+                )
+                await db_service.bulk_insert_fingerprints(
+                    session, song.id, fingerprints
+                )
+                await db_service.set_song_fingerprinted(session, song.id)
 
-            await db_service.bulk_insert_fingerprints(session, song.id, fingerprints)
-
-            await db_service.update_song_fingerprinted(session, song.id)
-
-            logger.info(
-                f"Successfully processed song {song.id} with {len(fingerprints)} fingerprints"
-            )
+        logger.info(f"Successfully processed and committed song '{title}'.")
 
     except Exception as e:
-        logger.error(f"Error in background audio processing: {e}")
+        logger.error(f"Error in background audio processing: {e}", exc_info=True)
 
 
 @router.post("/recognize")
