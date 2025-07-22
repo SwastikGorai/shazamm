@@ -8,6 +8,11 @@ dependencies = [
     "aiosqlite>=0.21.0",
     "alembic>=1.16.4",
     "fastapi>=0.116.1",
+    "numpy>=2.3.1",
+    "python-dotenv>=1.1.1",
     "python-multipart>=0.0.20",
+    "ruff>=0.12.4",
     "sqlalchemy[asyncio]>=2.0.41",
+    "uuid7>=0.1.0",
+    "uvicorn>=0.35.0",
 ]
