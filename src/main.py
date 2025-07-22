@@ -3,6 +3,7 @@ from fastapi import FastAPI
 import logging
 
 from database import engine
+from api.routes import router as api_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.include_router(api_router, prefix="/api", tags=["audio"])
 
 
 @app.get("/health")
