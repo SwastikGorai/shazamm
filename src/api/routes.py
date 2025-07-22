@@ -58,16 +58,16 @@ async def process_audio_ingestion(
 
 @router.post("/recognize")
 async def recognize_audio(
-    file: UploadFile = File(...), session: AsyncSession = Depends(get_async_session)
+    audio: UploadFile = File(...), session: AsyncSession = Depends(get_async_session)
 ):
-    if not file.content_type or not file.content_type.startswith("audio/"):
+    if not audio.content_type or not audio.content_type.startswith("audio/"):
         raise HTTPException(
             status_code=400, detail="Invalid file type. Please upload an audio file."
         )
 
     try:
-        audio_data = await file.read()
-        logger.info(f"Processing recognition request for file: {file.filename}")
+        audio_data = await audio.read()
+        logger.info(f"Processing recognition request for file: {audio.filename}")
 
         result = await recognition_service.recognize_audio(session, audio_data)
 
