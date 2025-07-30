@@ -24,23 +24,25 @@ For a little more detailed explanation of the audio fingerprinting process, plea
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/your-username/shazamm.git
+    https://github.com/SwastikGorai/shazamm
     cd shazamm
     ```
 
 2.  **Install dependencies:**
-
+   
     ```bash
-    pip install -r requirements.txt
+    uv venv
+    ./venv/scripts/activate
+    uv sync
     ```
 
-3.  **Initialize the database:**
+4.  **Initialize the database:**
 
     ```bash
     alembic upgrade head
     ```
 
-4.  **Run the application:**
+5.  **Run the application:**
 
     ```bash
     python src/server.py
