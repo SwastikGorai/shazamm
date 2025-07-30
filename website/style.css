@@ -1,13 +1,16 @@
 :root {
-    --primary-color: #8e44ad;
-    --secondary-color: #9b59b6;
-    --background-color: #f5f5f5;
-    --text-color: #333;
+    --primary-color: #4A90E2; /* A professional blue */
+    --secondary-color: #50E3C2; /* A vibrant teal */
+    --background-color: #F0F2F5; /* Light gray for subtle background */
+    --text-color: #333333; /* Dark gray for readability */
+    --glass-border-color: rgba(255, 255, 255, 0.3);
+    --glass-bg-color: rgba(255, 255, 255, 0.15);
 }
 
 body {
-    font-family: 'Roboto', sans-serif;
-    background-color: var(--background-color);
+    font-family: 'Poppins', sans-serif;
+    background: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80') no-repeat center center fixed;
+    background-size: cover;
     color: var(--text-color);
     display: flex;
     justify-content: center;
@@ -17,26 +20,35 @@ body {
 }
 
 .container {
+    background: var(--glass-bg-color);
+    backdrop-filter: blur(15px); /* Increased blur for more effect */
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 20px;
+    border: 1px solid var(--glass-border-color);
+    padding: 2.5rem 3.5rem; /* Slightly more padding */
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); /* Added subtle shadow */
 }
 
 h1 {
-    font-size: 4rem;
+    font-size: 3.5rem; /* Slightly smaller for balance */
     color: var(--primary-color);
     margin-bottom: 0.5rem;
+    font-weight: 600; /* Make it bolder */
 }
 
 p {
-    font-size: 1.2rem;
-    color: var(--secondary-color);
+    font-size: 1.1rem; /* Slightly smaller */
+    color: var(--text-color);
     margin-top: 0;
+    opacity: 0.8;
 }
 
 .recorder {
-    margin-top: 2rem;
+    margin-top: 2.5rem; /* Adjusted margin */
 }
 
 .record-button {
@@ -46,8 +58,8 @@ p {
     width: 100px;
     height: 100px;
     cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -55,21 +67,24 @@ p {
 
 .record-button:hover {
     background-color: var(--secondary-color);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .record-button.recording {
-    background-color: #c0392b;
+    background-color: #E74C3C; /* A professional red */
 }
 
 .result {
-    margin-top: 2rem;
-    font-size: 1.5rem;
+    margin-top: 2.5rem; /* Adjusted margin */
+    font-size: 1.6rem; /* Slightly larger */
+    color: var(--text-color);
+    font-weight: 600;
 }
 
 .confidence {
-    margin-top: 1rem;
+    margin-top: 0.8rem; /* Adjusted margin */
     font-family: 'Courier New', Courier, monospace;
-    font-size: 1.2rem;
-    color: #555;
+    font-size: 1.1rem; /* Slightly smaller */
+    color: var(--text-color);
+    opacity: 0.7;
 }
